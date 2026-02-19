@@ -12,6 +12,7 @@ st.set_page_config(page_title="India Invest AI", layout="centered")
 # This ensures the app doesn't crash if you forgot to add the secret
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    st.success("API Key found and configured!") # Uncomment this to test
 else:
     st.error("Error: GEMINI_API_KEY not found in Streamlit Secrets.")
     st.stop()
