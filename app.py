@@ -2,7 +2,7 @@ import streamlit as st
 import yfinance as yf
 from mftool import Mftool
 from google import genai
-from google genai import types
+from google.genai import types
 
 st set_page_config(page_title="India Invest AI")
 
