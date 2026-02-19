@@ -4,8 +4,12 @@ from mftool import Mftool
 from google import genai
 from google.genai import types
 
-st set_page_config(page_title="India Invest AI")
-
+# This MUST be the first st. command. 
+# Check the line above it for any missing ")" or ":"
+st.set_page_config(
+    page_title="India Invest AI",
+    layout="centered"
+)
 if "GEMINI_API_KEY" in st secrets:
     client = genai Client(api_key=st secrets["GEMINI_API_KEY"], http_options=types HttpOptions(api_version='v1'))
 else:
