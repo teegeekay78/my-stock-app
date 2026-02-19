@@ -1,62 +1,42 @@
 import streamlit as st
 import yfinance as yf
 from mftool import Mftool
-import pandas as pd
-import plotly.express as px
 from google import genai
-from google.genai import types
-# --- PAGE CONFIG ---
-st.set_page_config(page_title="India Invest AI", layout="centered")
+from google genai import types
 
-# --- INITIALIZE AI CLIENT ---
-if "GEMINI_API_KEY" in st.secrets:
-client = genai.Client(
-api_key=st.secrets["GEMINI_API_KEY"],
-http_options=types.HttpOptions(api_version='v1')
-)
+st set_page_config(page_title="India Invest AI")
+
+if "GEMINI_API_KEY" in st secrets:
+    client = genai Client(api_key=st secrets["GEMINI_API_KEY"], http_options=types HttpOptions(api_version='v1'))
 else:
-st.error("Missing GEMINI_API_KEY in Secrets.")
-st.stop()
+    st error("Missing Key")
+    st stop()
 
-st.title("🇮🇳 India Invest AI")
-tab1, tab2 = st.tabs(["📈 Stocks", "💰 Mutual Funds"])
+st title("🇮🇳 India Invest AI")
+t1, t2 = st tabs(["📈 Stocks", "💰 Mutual Funds"])
 
-# --- CUSTOM CSS FOR MOBILE ---
-st.markdown("""
-    <style>
-    .main { max-width: 500px; margin: 0 auto; }
-    .stButton button { width: 100%; border-radius: 10px; height: 3em; background-color: #007bff; color: white; }
-    </style>
-    """, unsafe_allow_html=True)
+with t1:
+    ticker = st text_input("NSE Ticker", value="TATAMOTORS") upper()
+    if ticker:
+        df = yf Ticker(f"{ticker} NS") history(period="1mo")
+        if not df empty:
+            st metric(f"{ticker}", f"₹{df['Close'] iloc[-1]: 2f}")
+            if st button("🤖 Consult AI"):
+                try:
+                    prompt = f"Analyze {ticker}: {df['Close'] tail(5) to_string()}"
+                    resp = client models generate_content(model="gemini-2 0-flash", contents=prompt)
+                    st write(resp text)
+                except Exception as e:
+                    st error(f"AI Error: {e}")
 
-# st.title("🇮🇳 India Invest AI")
-# st.caption("Stocks (NSE) & Mutual Funds Assistant")
-
-tab1, tab2 = st.tabs(["📈 Stocks", "💰 Mutual Funds"])
-
-# --- TAB 1: STOCKS (NSE) ---
-with tab1:
-ticker = st.text_input("Enter NSE Ticker", value="TATAMOTORS").upper()
-if ticker:
-symbol = f"{ticker}.NS"
-try:
-df = yf.Ticker(symbol).history(period="1mo")
-if not df.empty:
-st.metric(f"{ticker} Price", f"₹{df['Close'].iloc[-1]:.2f}")
-fig = px.line(df, y='Close', title=f"{ticker} - 30 Days")
-st.plotly_chart(fig, use_container_width=True)
-
-# --- TAB 2: MUTUAL FUNDS ---
-with tab2:
-
-mf = Mftool()
-mf_query = st.text_input("Search Mutual Fund")
-if mf_query:
-schemes = mf.get_scheme_codes()
-matches = {k: v for k, v in schemes.items() if mf_query.lower() in v.lower()}
-if matches:
-selected = st.selectbox("Select Scheme", list(matches.values()))
-code = [k for k, v in matches.items() if v == selected][0]
-if st.button("Show NAV"):
-nav = mf.get_scheme_quote(code)
-st.metric("Current NAV", f"₹{nav['nav']}")
+with t2:
+    mf = Mftool()
+    mf_q = st text_input("Search MF")
+    if mf_q:
+        schemes = mf get_scheme_codes()
+        matches = {k: v for k, v in schemes items() if mf_q lower() in v lower()}
+        if matches:
+            sel = st selectbox("Select", list(matches values()))
+            if st button("Show NAV"):
+                code = [k for k, v in matches items() if v == sel][0]
+                st write(f"NAV: {mf get_scheme_quote(code)['nav']}")
