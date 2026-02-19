@@ -3,16 +3,15 @@ import yfinance as yf
 from mftool import Mftool
 import pandas as pd
 import plotly.express as px
-import google.generativeai as genai
+from google import genai  # Use the NEW stable library
 
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="India Invest AI", layout="centered")
 
-# --- SECRETS CHECK ---
-# This ensures the app doesn't crash if you forgot to add the secret
+# --- INITIALIZE AI CLIENT ---
 if "GEMINI_API_KEY" in st.secrets:
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    st.success("API Key found and configured!") # Uncomment this to test
+    # The new client automatically uses the correct stable API version
+    client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 else:
     st.error("Error: GEMINI_API_KEY not found in Streamlit Secrets.")
     st.stop()
@@ -28,7 +27,6 @@ st.markdown("""
 st.title("🇮🇳 India Invest AI")
 st.caption("Stocks (NSE) & Mutual Funds Assistant")
 
-# --- TABS FOR MOBILE NAVIGATION ---
 tab1, tab2 = st.tabs(["📈 Stocks", "💰 Mutual Funds"])
 
 # --- TAB 1: STOCKS (NSE) ---
@@ -55,25 +53,18 @@ with tab1:
 
                 if st.button("🤖 Consult Gemini AI"):
                     try:
-                        # Using the faster 1.5-flash model
-                        model = genai.GenerativeModel('gemini-1.5-flash')
-                        
                         recent_data = df[['Close']].tail(30).to_string()
-                        prompt = f"""
-                        Act as a professional Indian Stock Market Expert. 
-                        Analyze the following last 30 days of closing prices for {ticker_input}:
-                        {recent_data}
-                        
-                        Provide a clear 'Buy', 'Hold', or 'Sell' suggestion. 
-                        Explain why in 3 simple bullet points using plain English. 
-                        Mention the current trend.
-                        """
+                        prompt = f"Act as an Indian Stock Expert. Analyze these 30-day prices for {ticker_input}: {recent_data}. Suggest Buy/Hold/Sell in 3 bullets."
                         
                         with st.spinner('AI is analyzing...'):
-                            response = model.generate_content(prompt)
+                            # Updated call for the new SDK
+                            response = client.models.generate_content(
+                                model="gemini-1.5-flash", 
+                                contents=prompt
+                            )
                             st.subheader("AI Analysis")
                             st.write(response.text)
-                            st.caption("Disclaimer: AI analysis is for educational purposes only.")
+                            st.caption("Disclaimer: For educational purposes only.")
                     except Exception as e:
                         st.error(f"AI Error: {e}")
 
@@ -84,22 +75,12 @@ with tab1:
 with tab2:
     mf = Mftool()
     mf_search = st.text_input("Search Mutual Fund (e.g., Parag Parikh)")
-    
     if mf_search:
         all_schemes = mf.get_scheme_codes()
         matches = {k: v for k, v in all_schemes.items() if mf_search.lower() in v.lower()}
-        
         if matches:
             selected_scheme_name = st.selectbox("Select Exact Scheme", list(matches.values()))
             scheme_code = [k for k, v in matches.items() if v == selected_scheme_name][0]
-            
             if st.button("Get NAV Details"):
-                data = mf.get_scheme_details(scheme_code)
                 nav_data = mf.get_scheme_quote(scheme_code)
-                
-                st.subheader(data['scheme_name'])
                 st.metric("Current NAV", f"₹{nav_data['nav']}")
-                st.write(f"**Category:** {data['scheme_category']}")
-                st.write(f"**Type:** {data['scheme_type']}")
-        else:
-            st.info("No matching Mutual Funds found.")
