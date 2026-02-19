@@ -11,7 +11,7 @@ st.set_page_config(
     layout="centered"
 )
 if "GEMINI_API_KEY" in st.secrets:
-    client = genai.Client(api_key=st secrets["GEMINI_API_KEY"], http_options=types HttpOptions(api_version='v1'))
+    client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"], http_options=types HttpOptions(api_version='v1'))
 else:
     st.error("Missing Key")
     st.stop()
