@@ -1,8 +1,7 @@
 streamlit
 yfinance
 pandas
-pandas-ta
+plotly
+google-genai
 mftool
 deprecated
-google-generativeai
-plotly
