@@ -5,3 +5,4 @@ plotly
 google-genai
 mftool
 deprecated
+curl_cffi
