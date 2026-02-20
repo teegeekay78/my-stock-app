@@ -40,7 +40,7 @@ with t1:
                 if st.button("🤖 Consult AI Analyst"):
                     with st.spinner("Analyzing..."):
                         prompt = f"Technical analysis for {ticker}. Prices: {df['Close'].tail(10).to_string()}"
-                        resp = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+                        resp = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
                         st.markdown(resp.text)
             else:
                 st.warning("No data found for this ticker.")
