@@ -4,6 +4,7 @@ from mftool import Mftool
 from google import genai
 from google.genai import types
 import plotly.express as px
+from curl_cffi import requests as curl_requests
 
 # 1. Page Config
 st.set_page_config(page_title="India Invest AI", layout="wide")
@@ -25,18 +26,20 @@ t1, t2 = st.tabs(["📈 Stocks", "💰 Mutual Funds"])
 # Inside your ticker block:
     
 with t1:
-    ticker = st.text_input("NSE Ticker", value="TATAMOTORS").upper()
+   ticker = st.text_input("NSE Ticker", value="INFY").upper()
     if ticker:
-        # Create a session that looks like a real Chrome browser
-        session = curl_requests.Session(impersonate="chrome")
-        # Pass this session into yfinance
-        data = yf.Ticker(f"{ticker}.NS", session=session)
-        df = data.history(period="1mo")
-        if not df.empty:
-            # Stats and Chart
-            last_price = df['Close'].iloc[-1]
-            st.metric(f"{ticker} Current Price", f"₹{last_price:.2f}")
-            
+        try:
+            # Create a session that looks like a real browser
+            session = curl_requests.Session(impersonate="chrome")
+            data = yf.Ticker(f"{ticker}.NS", session=session)
+            df = data.history(period="1mo")
+            if not df.empty:
+                st.metric(f"{ticker}", f"₹{df['Close'].iloc[-1]:.2f}")
+                st.line_chart(df['Close'])
+                # ... rest of your Consult AI button code ...
+        except Exception as e:
+            st.error(f"Data Error: {e}")
+      
             # Interactive Plotly Chart
             fig = px.line(df, y='Close', title=f"{ticker} 30-Day Trend")
             st.plotly_chart(fig, use_container_width=True)
