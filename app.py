@@ -26,7 +26,7 @@ t1, t2 = st.tabs(["📈 Stocks", "💰 Mutual Funds"])
 # Inside your ticker block:
     
 with t1:
-   ticker = st.text_input("NSE Ticker", value="INFY").upper()
+    ticker = st.text_input("NSE Ticker", value="INFY").upper()
     if ticker:
         try:
             # Create a session that looks like a real browser
