@@ -3,7 +3,8 @@ import yfinance as yf
 from mftool import Mftool
 import pandas as pd
 import plotly.express as px
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="India Invest Pro AI", layout="centered")
