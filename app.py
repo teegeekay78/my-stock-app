@@ -2,7 +2,7 @@ import streamlit as st
 import yfinance as yf
 from mftool import Mftool
 import pandas as pd
-import plotly.expressions as px
+import plotly.express as px
 import google.generativeai as genai
 
 # --- PAGE CONFIG ---
