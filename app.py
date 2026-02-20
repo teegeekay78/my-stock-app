@@ -34,7 +34,7 @@ with t1:
                     # Fixed dots: .tail() and .to_string()
                     prompt = f"Analyze {ticker}: {df['Close'].tail(5).to_string()}"
                     # Fixed dots and model name
-                    resp = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+                    resp = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
                     # Fixed dot: resp.text
                     st.write(resp.text)
                 except Exception as e:
