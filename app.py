@@ -22,12 +22,16 @@ st.title("🇮🇳 India Invest AI")
 t1, t2 = st.tabs(["📈 Stocks", "💰 Mutual Funds"])
 
 # 3. Stock Tab
+# Inside your ticker block:
+    
 with t1:
     ticker = st.text_input("NSE Ticker", value="TATAMOTORS").upper()
     if ticker:
-        data = yf.Ticker(f"{ticker}.NS")
+        # Create a session that looks like a real Chrome browser
+        session = curl_requests.Session(impersonate="chrome")
+        # Pass this session into yfinance
+        data = yf.Ticker(f"{ticker}.NS", session=session)
         df = data.history(period="1mo")
-        
         if not df.empty:
             # Stats and Chart
             last_price = df['Close'].iloc[-1]
