@@ -1,85 +1,74 @@
 import streamlit as st
 import yfinance as yf
 from mftool import Mftool
-import pandas as pd
-import plotly.express as px
 from google import genai
 from google.genai import types
+import plotly.express as px
 
-# --- PAGE CONFIG ---
-st.set_page_config(page_title="India Invest Pro AI", layout="centered")
+# 1. Page Config
+st.set_page_config(page_title="India Invest AI", layout="wide")
 
-# --- CUSTOM CSS ---
-st.markdown("""
-    <style>
-    .main { max-width: 500px; margin: 0 auto; }
-    .stButton button { width: 100%; border-radius: 10px; height: 3.5em; background-color: #1E1E1E; color: white; font-weight: bold; }
-    .stMetric { background-color: #f0f2f6; padding: 10px; border-radius: 10px; }
-    </style>
-    """, unsafe_allow_html=True)
+# 2. AI Client Initialization (2026 SDK)
+if "GEMINI_API_KEY" in st.secrets:
+    client = genai.Client(
+        api_key=st.secrets["GEMINI_API_KEY"], 
+        http_options=types.HttpOptions(api_version='v1')
+    )
+else:
+    st.error("Missing Key in Secrets")
+    st.stop()
 
-st.title("🇮🇳 India Invest Pro")
-st.caption("NSE Stock Analysis & Mutual Fund NAV Tracker")
+st.title("🇮🇳 India Invest AI")
+t1, t2 = st.tabs(["📈 Stocks", "💰 Mutual Funds"])
 
-# --- SIDEBAR: API KEY ---
-with st.sidebar:
-    st.header("⚙️ Configuration")
-    api_key = st.text_input("Enter Gemini API Key", type="password")
-    st.info("Get your free key at [aistudio.google.com](https://aistudio.google.com/)")
-
-# --- TABS ---
-tab1, tab2 = st.tabs(["📊 Stock Analyst", "💰 Mutual Funds"])
-
-# --- TAB 1: STOCKS (NSE) ---
-with tab1:
+# 3. Stock Tab
+with t1:
     ticker = st.text_input("NSE Ticker", value="TATAMOTORS").upper()
     if ticker:
-        # 1. Fetch data
-        df = yf.Ticker(f"{ticker}.NS").history(period="1mo")
+        data = yf.Ticker(f"{ticker}.NS")
+        df = data.history(period="1mo")
         
         if not df.empty:
-            # 2. Display Price & Chart (Always visible)
-            st.metric(f"{ticker}", f"₹{df['Close'].iloc[-1]:.2f}")
-            st.line_chart(df['Close']) 
+            # Stats and Chart
+            last_price = df['Close'].iloc[-1]
+            st.metric(f"{ticker} Current Price", f"₹{last_price:.2f}")
             
-            # 3. The Consult AI Button (Aligned with the chart)
-            if st.button("🤖 Consult AI"):
+            # Interactive Plotly Chart
+            fig = px.line(df, y='Close', title=f"{ticker} 30-Day Trend")
+            st.plotly_chart(fig, use_container_width=True)
+            
+            if st.button("🤖 Consult AI Analyst"):
                 try:
-                    # The prompt with your new technical analysis instructions
+                    # Professional Technical Prompt
                     prompt = f"""
-                    Analyze {ticker} using these prices: {df['Close'].tail(10).to_string()}
-                    1. Trend: Bullish/Bearish?
-                    2. Support/Resistance levels?
-                    3. Buy/Sell/Hold recommendation with logic.
+                    Analyze {ticker} with these recent prices: {df['Close'].tail(10).to_string()}
+                    1. Identify the Technical Trend (Bullish/Bearish).
+                    2. Suggest Key Support and Resistance levels.
+                    3. Give a Recommendation (Buy/Hold/Sell) with technical logic.
                     """
                     
-                    # Show a spinner so the user knows the AI is thinking
-                    with st.spinner("Analyzing markets..."):
-                        resp = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
-                        st.markdown("### 🤖 AI Technical Report")
+                    with st.spinner("AI is analyzing charts..."):
+                        # Correct 2026 method call
+                        resp = client.models.generate_content(
+                            model="gemini-2.0-flash", 
+                            contents=prompt
+                        )
+                        st.markdown("---")
+                        st.markdown("### 🤖 Expert AI Analysis")
                         st.write(resp.text)
                 except Exception as e:
                     st.error(f"AI Error: {e}")
-        else:
-            st.warning("No data found. Please check the ticker symbol.")
-# --- TAB 2: MUTUAL FUNDS ---
-with tab2:
+
+# 4. Mutual Fund Tab
+with t2:
     mf = Mftool()
-    mf_query = st.text_input("Search Fund Name (e.g. 'SBI Small Cap')")
-    
-    if mf_query:
-        all_funds = mf.get_scheme_codes()
-        matches = {k: v for k, v in all_funds.items() if mf_query.lower() in v.lower()}
-        
+    mf_q = st.text_input("Search Mutual Fund Name")
+    if mf_q:
+        schemes = mf.get_scheme_codes()
+        matches = {k: v for k, v in schemes.items() if mf_q.lower() in v.lower()}
         if matches:
-            selected_name = st.selectbox("Pick Scheme", list(matches.values()))
-            code = [k for k, v in matches.items() if v == selected_name][0]
-            
-            if st.button("Check NAV"):
-                details = mf.get_scheme_details(code)
+            sel = st.selectbox("Select Scheme", list(matches.values()))
+            if st.button("Get Latest NAV"):
+                code = [k for k, v in matches.items() if v == sel][0]
                 quote = mf.get_scheme_quote(code)
-                st.markdown(f"### {details['scheme_name']}")
-                st.metric("Latest NAV", f"₹{quote['nav']}")
-                st.info(f"**Category:** {details['scheme_category']}")
-        else:
-            st.info("No funds found with that name.")
+                st.info(f"The latest NAV for {sel} is: {quote['nav']}")
